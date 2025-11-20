@@ -1,18 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Block, BlockType, LinkBlock, ShopBlock, Product, ChatbotProfile, UserRole, SearchBlock, SeoConfig, Profile, SocialsBlock, SocialPlatform, SocialLink, TextBlock, ImageBlock, VideoBlock, ButtonBlock, ImageCarouselBlock, CarouselImage, BaseBlock } from '../types';
-import { TrashIcon, LinkIcon, ShoppingCartIcon, WandSparklesIcon, BotIcon, LockIcon, SearchIcon, BarChartIcon, ChevronDownIcon, GripVerticalIcon, TagsIcon, SettingsIcon, PlusIcon, GlobeIcon, TwitterIcon, InstagramIcon, GithubIcon, TelegramIcon, LinkedinIcon, TypeIcon, ImageIcon, VideoIcon, MousePointerClickIcon, GalleryHorizontalIcon, UploadCloudIcon, DownloadCloudIcon, Share2Icon, GiftIcon, FacebookIcon, TiktokIcon, YoutubeIcon, ThreadsIcon, EyeIcon } from './Icons';
+import { TrashIcon, LinkIcon, ShoppingCartIcon, WandSparklesIcon, BotIcon, LockIcon, SearchIcon, BarChartIcon, ChevronDownIcon, GripVerticalIcon, TagsIcon, SettingsIcon, PlusIcon, GlobeIcon, TwitterIcon, InstagramIcon, GithubIcon, TelegramIcon, LinkedinIcon, TypeIcon, ImageIcon, VideoIcon, MousePointerClickIcon, GalleryHorizontalIcon, UploadCloudIcon, DownloadCloudIcon, Share2Icon, GiftIcon, FacebookIcon, TiktokIcon, YoutubeIcon, ThreadsIcon } from './Icons';
 import * as geminiService from '../services/geminiService';
 import { compressToBase64 } from '../utils/compression';
-
-const URL_REGEX = new RegExp(
-  '^(https?:\\/\\/)?' + // protocol
-  '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
-  '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
-  '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
-  '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
-  '(\\#[-a-z\\d_]*)?$', // fragment locator
-  'i'
-);
 
 const generateTitleFromUrl = (urlString: string): string => {
     try {
@@ -80,15 +70,13 @@ const RenderAvatarFrame: React.FC<{ frameId: string }> = ({ frameId }) => {
                     <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="50" cy="50" r="48" stroke="url(#chroma-gradient-editor)" strokeWidth="4" />
                         <defs>
-                            {React.createElement('conicGradient', { id: 'chroma-gradient-editor', from: '0deg', at: '50% 50%' },
-                                <React.Fragment key="stops">
-                                    <stop offset="0%" stopColor="#818cf8"/>
-                                    <stop offset="25%" stopColor="#a78bfa"/>
-                                    <stop offset="50%" stopColor="#f472b6"/>
-                                    <stop offset="75%" stopColor="#fbbf24"/>
-                                    <stop offset="100%" stopColor="#818cf8"/>
-                                </React.Fragment>
-                            )}
+                            <linearGradient id="chroma-gradient-editor" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#818cf8"/>
+                                <stop offset="25%" stopColor="#a78bfa"/>
+                                <stop offset="50%" stopColor="#f472b6"/>
+                                <stop offset="75%" stopColor="#fbbf24"/>
+                                <stop offset="100%" stopColor="#818cf8"/>
+                            </linearGradient>
                         </defs>
                     </svg>
                 </div>
@@ -409,32 +397,4 @@ const SocialsBlockEditor: React.FC<SocialsBlockEditorProps> = ({ block, updateBl
                     <select 
                         value={newLinkPlatform}
                         onChange={(e) => setNewLinkPlatform(e.target.value as SocialPlatform)}
-                        className="bg-gray-700 border border-gray-600 rounded-md px-2 py-2 text-white capitalize"
-                    >
-                        {Object.values(SocialPlatform).map(p => <option key={p} value={p} className="capitalize">{p}</option>)}
-                    </select>
-                    <input
-                        type="text"
-                        placeholder="URL"
-                        value={newLinkUrl}
-                        onChange={(e) => setNewLinkUrl(e.target.value)}
-                        className="flex-grow bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    />
-                    <button onClick={addLink} className="p-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-white">
-                        <PlusIcon className="w-5 h-5" />
-                    </button>
-                </div>
-            </div>
-            <BlockStyleEditor block={block} updateBlock={updateBlock} />
-        </div>
-    );
-};
-
-
-interface LinkBlockEditorProps {
-  block: LinkBlock;
-  updateBlock: (id: string, updates: Partial<LinkBlock>) => void;
-}
-
-const LinkBlockEditor: React.FC<LinkBlockEditorProps> = ({ block, updateBlock }) => {
-  const [suggestions, setSuggestions
+                        className="bg-gray-700 border border-gray-600 rounded-

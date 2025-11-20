@@ -1,7 +1,6 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
-const callGeminiApi = async <T,>(apiCall: () => Promise<T>, maxRetries = 5): Promise<T> => {
+const callGeminiApi = async <T,>(apiCall: () => Promise<T>, maxRetries = 3): Promise<T> => {
   let attempt = 0;
   while (attempt < maxRetries) {
     try {
@@ -12,7 +11,7 @@ const callGeminiApi = async <T,>(apiCall: () => Promise<T>, maxRetries = 5): Pro
         console.error("API call failed after all retries", error);
         throw error;
       }
-      const delay = Math.pow(2, attempt) * 100 + Math.random() * 100;
+      const delay = Math.pow(2, attempt) * 500;
       console.log(`API call failed, retrying in ${delay.toFixed(0)}ms... (Attempt ${attempt})`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -26,7 +25,6 @@ export const generateLinkTitles = async (currentTitle: string, url: string): Pro
 
   return callGeminiApi(async () => {
     const response = await ai.models.generateContent({
-      // FIX: Updated deprecated model name.
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
@@ -45,7 +43,7 @@ export const generateLinkTitles = async (currentTitle: string, url: string): Pro
       }
     });
     
-    const rawText = response.text.trim();
+    const rawText = response.text?.trim() || "{}";
     try {
         const jsonResponse = JSON.parse(rawText);
         if (jsonResponse.titles && Array.isArray(jsonResponse.titles) && jsonResponse.titles.length > 0) {
@@ -65,28 +63,39 @@ export const generateProductDescription = async (productName: string, price: num
 
   return callGeminiApi(async () => {
     const response = await ai.models.generateContent({
-      // FIX: Updated deprecated model name.
       model: "gemini-2.5-flash",
       contents: prompt,
     });
-    return response.text;
+    return response.text || "";
   });
 };
 
+interface ChatMessage {
+    sender: 'user' | 'bot';
+    text: string;
+}
 
-export const getChatbotResponse = async (question: string, profile: string): Promise<string> => {
+export const getChatbotResponse = async (currentMessage: string, history: ChatMessage[], profileContext: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   return callGeminiApi(async () => {
-    const response = await ai.models.generateContent({
-      // FIX: Updated deprecated model name.
+    // Convert app history to Gemini API history format correctly
+    // 'user' -> 'user', 'bot' -> 'model'
+    const chatHistory = history.map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }]
+    }));
+
+    const chat = ai.chats.create({
       model: "gemini-2.5-flash",
-      contents: `Пользователь спросил: "${question}"`,
+      history: chatHistory,
       config: {
-        systemInstruction: `Ты — полезный, дружелюбный и слегка неформальный ассистент владельца этой страницы. Твоя задача — отвечать на вопросы пользователей, основываясь СТРОГО на предоставленной информации. Твои ответы должны быть короткими и по делу, в идеале — не длиннее 2-3 предложений. Если вопрос выходит за рамки известной тебе информации, вежливо ответь: "У меня нет такой информации, но вы можете связаться с ним/ней напрямую, чтобы уточнить!". Всегда отвечай на русском языке.\n\nПРОФИЛЬ:\n${profile}`,
-      }
+        systemInstruction: `Ты — полезный, дружелюбный и слегка неформальный ассистент владельца этой страницы. Твоя задача — отвечать на вопросы пользователей, основываясь СТРОГО на предоставленной информации. Твои ответы должны быть короткими и по делу, в идеале — не длиннее 2-3 предложений. Если вопрос выходит за рамки известной тебе информации, вежливо ответь: "У меня нет такой информации, но вы можете связаться с ним/ней напрямую, чтобы уточнить!". Всегда отвечай на русском языке.\n\nПРОФИЛЬ:\n${profileContext}`,
+      },
     });
-    return response.text;
+
+    const response = await chat.sendMessage({ message: currentMessage });
+    return response.text || "Извините, я не смог сгенерировать ответ.";
   });
 };
 
@@ -95,7 +104,6 @@ export const getSearchResults = async (query: string): Promise<{ text: string; s
   
   return callGeminiApi(async () => {
     const response = await ai.models.generateContent({
-      // FIX: Updated deprecated model name.
       model: "gemini-2.5-flash",
       contents: query,
       config: {
@@ -103,7 +111,7 @@ export const getSearchResults = async (query: string): Promise<{ text: string; s
       },
     });
     
-    const text = response.text;
+    const text = response.text || "Ничего не найдено.";
     const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
     
     return { text, sources };
@@ -138,7 +146,7 @@ export const generateSeoMeta = async (pageContent: string): Promise<{ descriptio
       }
     });
 
-    const rawText = response.text.trim();
+    const rawText = response.text?.trim() || "{}";
     try {
       const jsonResponse = JSON.parse(rawText);
       if (jsonResponse.description && jsonResponse.keywords) {

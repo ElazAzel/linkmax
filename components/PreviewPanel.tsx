@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Block, BlockType, LinkBlock, Product, ShopBlock, ChatbotProfile, SearchBlock, Profile, SocialsBlock, SocialPlatform, TextBlock, ImageBlock, VideoBlock, ButtonBlock, ImageCarouselBlock, CarouselImage } from '../types';
 import { ShoppingCartIcon, SearchIcon, SendIcon, TwitterIcon, InstagramIcon, GithubIcon, TelegramIcon, LinkedinIcon, GlobeIcon, ShareIcon, FacebookIcon, TiktokIcon, YoutubeIcon, ThreadsIcon } from './Icons';
@@ -36,7 +33,6 @@ const parseCustomStyles = (styleString?: string): React.CSSProperties => {
 const RenderAvatarFrame: React.FC<{ frameId: string }> = ({ frameId }) => {
     const frameProps = {
         className: "absolute inset-0 w-full h-full pointer-events-none",
-        // FIX: Changed 'aria-hidden' value to boolean to match 'Booleanish' type
         'aria-hidden': true
     };
 
@@ -55,18 +51,15 @@ const RenderAvatarFrame: React.FC<{ frameId: string }> = ({ frameId }) => {
             return (
                 <div {...frameProps} style={{ animation: 'rotate-gradient 8s linear infinite' }}>
                     <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="50" cy="50" r="48" stroke="url(#chroma-gradient)" strokeWidth="4" />
+                        <circle cx="50" cy="50" r="48" stroke="url(#chroma-gradient-preview)" strokeWidth="4" />
                         <defs>
-                            {/* FIX: Use React.createElement for non-standard SVG element to avoid TypeScript error. */}
-                            {React.createElement('conicGradient', { id: 'chroma-gradient', from: '0deg', at: '50% 50%' },
-                                <React.Fragment key="stops">
-                                    <stop offset="0%" stopColor="#818cf8"/>
-                                    <stop offset="25%" stopColor="#a78bfa"/>
-                                    <stop offset="50%" stopColor="#f472b6"/>
-                                    <stop offset="75%" stopColor="#fbbf24"/>
-                                    <stop offset="100%" stopColor="#818cf8"/>
-                                </React.Fragment>
-                            )}
+                            <linearGradient id="chroma-gradient-preview" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#818cf8"/>
+                                <stop offset="25%" stopColor="#a78bfa"/>
+                                <stop offset="50%" stopColor="#f472b6"/>
+                                <stop offset="75%" stopColor="#fbbf24"/>
+                                <stop offset="100%" stopColor="#818cf8"/>
+                            </linearGradient>
                         </defs>
                     </svg>
                 </div>

@@ -28,16 +28,22 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ profile }) => {
   
   const handleSend = async () => {
     if (!userInput.trim()) return;
-    const newMessages: Message[] = [...messages, { sender: 'user', text: userInput }];
-    setMessages(newMessages);
+    
+    const currentMessageText = userInput;
+    
+    // Optimistically update UI
+    setMessages(prev => [...prev, { sender: 'user', text: currentMessageText }]);
     setUserInput('');
     setIsLoading(true);
 
     try {
-      const botResponse = await getChatbotResponse(userInput, profileString);
-      setMessages([...newMessages, { sender: 'bot', text: botResponse }]);
+      // Pass the EXISTING messages (history) to the service, plus the current profile context.
+      // The service will create a chat session with this history and send the new message.
+      const botResponse = await getChatbotResponse(currentMessageText, messages, profileString);
+      
+      setMessages(prev => [...prev, { sender: 'bot', text: botResponse }]);
     } catch (error) {
-      setMessages([...newMessages, { sender: 'bot', text: "Извините, сейчас возникли проблемы с подключением.", isError: true }]);
+      setMessages(prev => [...prev, { sender: 'bot', text: "Извините, сейчас возникли проблемы с подключением.", isError: true }]);
       console.error("Chatbot error:", error);
     } finally {
       setIsLoading(false);
@@ -66,7 +72,13 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ profile }) => {
             </button>
           </header>
 
-          <main className="flex-1 p-4 overflow-y-auto space-y-4">
+          <main className="flex-1 p-4 overflow-y-auto space-y-4 custom-scrollbar">
+            {messages.length === 0 && (
+                <div className="text-center text-gray-400 mt-10">
+                    <p className="text-sm">Привет! Я ИИ-ассистент.</p>
+                    <p className="text-xs mt-1">Спросите меня о {profile.name}!</p>
+                </div>
+            )}
             {messages.map((msg, index) => (
               <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] p-3 rounded-2xl text-white text-sm break-words transition-all duration-200 transform hover:-translate-y-0.5 ${msg.sender === 'user' ? 'bg-indigo-600 hover:bg-indigo-500 rounded-br-none' : 'bg-gray-700 hover:bg-gray-600 rounded-bl-none'} ${msg.isError ? 'border border-red-500/50' : ''}`}>
@@ -87,17 +99,17 @@ export const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ profile }) => {
           </main>
 
           <footer className="p-4 border-t border-gray-700">
-            <div className="flex items-center bg-gray-900 rounded-full">
+            <div className="flex items-center bg-gray-900 rounded-full border border-gray-600">
               <input
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSend()}
                 placeholder="Спросите о чем-нибудь..."
-                className="flex-1 bg-transparent px-5 py-3 text-white placeholder-gray-500 focus:outline-none"
+                className="flex-1 bg-transparent px-5 py-3 text-white placeholder-gray-500 focus:outline-none rounded-l-full"
                 disabled={isLoading}
               />
-              <button onClick={handleSend} disabled={isLoading} className="p-3 text-indigo-400 hover:text-indigo-300 disabled:text-gray-600 disabled:cursor-not-allowed" aria-label="Отправить сообщение">
+              <button onClick={handleSend} disabled={isLoading} className="p-3 pr-5 text-indigo-400 hover:text-indigo-300 disabled:text-gray-600 disabled:cursor-not-allowed rounded-r-full" aria-label="Отправить сообщение">
                 <SendIcon className="w-6 h-6" />
               </button>
             </div>
